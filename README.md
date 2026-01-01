@@ -25,6 +25,18 @@ Suno AI, Udio, VOCALOID, UTAU 等の作詞作業に最適です。
 * **Suno Ruby Support**
   * `漢字(よみ)` や `[Chorus]` などのメタタグ形式に対応しています。
 
+* **Syntax Highlighting (構文ハイライト)**
+  * メタタグ（`[Intro]`, `[Verse]`, `[Chorus]` など）を色分け表示します。
+  * ルビ記法の括弧部分も強調表示されます。
+
+* **Outline & Folding (アウトライン表示と折りたたみ)**
+  * サイドバーのアウトラインに曲の構造を表示します。
+  * 各セクションを折りたたんで見やすく管理できます。
+
+* **Snippets & Auto-completion (スニペットと自動補完)**
+  * `[` を入力すると、メタタグの候補が表示されます。
+  * `intro`, `verse`, `chorus` などのプレフィックスでも挿入できます。
+
 ## Usage (使い方)
 
 1. 拡張子が `.jlyrics` のファイルを作成します
