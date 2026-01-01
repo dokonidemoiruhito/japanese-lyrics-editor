@@ -40,10 +40,11 @@ Suno AI, Udio, VOCALOID, UTAU 等の作詞作業に最適です。
 ## Example
 
 ```text
- 8 a  恋に落ちた日の夜
-12 i  君の笑顔が忘れられない
-       [Chorus]
- 7 o  静かな夜に響く音
+     [Chorus]
+10 e 君の名前を呼んで
+ 8 e 夜に響く声
+ 7 o 明日(あした)も今日も
+ 3 o きっと
 ```
 
 *(The numbers and vowels are displayed as decorations, not actual text)*
