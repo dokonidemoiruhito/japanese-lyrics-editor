@@ -2,7 +2,7 @@
 
 日本語の歌詞作成を支援する VS Code 拡張機能です。
 各行のモーラ数（拍数）と、行末の母音をリアルタイムで表示します。
-Suno AI, Udio, VOCALOID, UTAU 等の作詞作業に最適です。
+Suno AI等の作詞作業に便利かもしれません。
 
 > **Note:** This is an unofficial extension designed for Japanese lyrics editing.
 > It features mora (syllable) counting and vowel detection to assist in rhyme schemes.
@@ -14,7 +14,8 @@ Suno AI, Udio, VOCALOID, UTAU 等の作詞作業に最適です。
 
 * **Vowel Display (母音表示)**
   * 行頭の数値の横に、その行の「最後の母音 (a, i, u, e, o, n)」を表示します。
-  * 韻（ライム）を踏む際の参考に便利です。
+  * 母音は色分け表示します。
+  * 韻（ライム）を踏む際の参考です。
 
 * **Real-time Updates**
   * 入力に合わせてリアルタイムに更新されます。
@@ -60,6 +61,24 @@ Suno AI, Udio, VOCALOID, UTAU 等の作詞作業に最適です。
 ```
 
 *(The numbers and vowels are displayed as decorations, not actual text)*
+
+## Settings (設定)
+
+この拡張機能は以下の設定をサポートしています：
+
+* **`jlyrics.showMoraCount`** (デフォルト: `true`)
+  * モーラ数を行頭に表示します。
+  * Show mora count at the beginning of each line.
+
+* **`jlyrics.showVowel`** (デフォルト: `true`)
+  * 行末の母音を表示します。
+  * Show ending vowel of each line.
+
+* **`jlyrics.colorizeVowel`** (デフォルト: `true`)
+  * 母音を色分けして表示します。
+  * Colorize vowels by type.
+
+設定を変更するには、VS Code の設定画面（`Ctrl+,`）で「jlyrics」を検索してください。
 
 ## Requirements
 
