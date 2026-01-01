@@ -1,0 +1,37 @@
+{
+  "Intro": {
+    "prefix": "intro",
+    "body": "[Intro]",
+    "description": "Insert [Intro] tag"
+  },
+  "Verse": {
+    "prefix": "verse",
+    "body": "[Verse]",
+    "description": "Insert [Verse] tag"
+  },
+  "Pre-Chorus": {
+    "prefix": "prechorus",
+    "body": "[Pre-Chorus]",
+    "description": "Insert [Pre-Chorus] tag"
+  },
+  "Chorus": {
+    "prefix": "chorus",
+    "body": "[Chorus]",
+    "description": "Insert [Chorus] tag"
+  },
+  "Bridge": {
+    "prefix": "bridge",
+    "body": "[Bridge]",
+    "description": "Insert [Bridge] tag"
+  },
+  "Outro": {
+    "prefix": "outro",
+    "body": "[Outro]",
+    "description": "Insert [Outro] tag"
+  },
+  "Break": {
+    "prefix": "break",
+    "body": "[Break]",
+    "description": "Insert [Break] tag"
+  }
+}

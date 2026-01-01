@@ -1,0 +1,54 @@
+{
+  "name": "japanese-lyrics-editor",
+  "displayName": "日本語作詞支援エディタ (J-Lyrics)",
+  "description": "モーラ数（拍数）カウントと母音表示機能付きの作詞支援ツール。",
+  "version": "0.2.0",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:jlyrics"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "jlyrics",
+        "aliases": [
+          "Japanese Lyrics",
+          "jlyrics",
+          "日本語作詞"
+        ],
+        "extensions": [
+          ".jlyrics"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "jlyrics",
+        "path": "./snippets/jlyrics.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "kuroshiro": "^1.2.0",
+    "kuroshiro-analyzer-kuromoji": "^1.1.0"
+  }
+}
