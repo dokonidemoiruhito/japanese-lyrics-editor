@@ -202,6 +202,12 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
         return;
     }
 
+    // 設定を読み込む
+    const config = vscode.workspace.getConfiguration('jlyrics');
+    const showMoraCount = config.get<boolean>('showMoraCount', true);
+    const showVowel = config.get<boolean>('showVowel', true);
+    const colorizeVowel = config.get<boolean>('colorizeVowel', true);
+
     const paddingDecorations: vscode.DecorationOptions[] = [];
     const moraDecorations: vscode.DecorationOptions[] = [];
     const vowelDecorations: vscode.DecorationOptions[] = [];
@@ -215,67 +221,76 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
         const vowel = await getEndVowel(text);
 
         // 1つ目: 透明な"0"（一桁なら1個、二桁なら無し、メタタグなら2個）
-        let paddingText = '';
-        if (mora === 0) {
-            paddingText = '00';
-        } else if (mora < 10) {
-            paddingText = '0';
-        }
+        if (showMoraCount) {
+            let paddingText = '';
+            if (mora === 0) {
+                paddingText = '00';
+            } else if (mora < 10) {
+                paddingText = '0';
+            }
 
-        if (paddingText) {
-            paddingDecorations.push({
-                range: new vscode.Range(lineIndex, 0, lineIndex, 0),
-                renderOptions: {
-                    before: {
-                        contentText: paddingText,
-                        color: 'transparent',
-                        fontWeight: 'normal'
+            if (paddingText) {
+                paddingDecorations.push({
+                    range: new vscode.Range(lineIndex, 0, lineIndex, 0),
+                    renderOptions: {
+                        before: {
+                            contentText: paddingText,
+                            color: 'transparent',
+                            fontWeight: 'normal'
+                        }
                     }
-                }
-            });
-        }
+                });
+            }
 
-        // 2つ目: モーラ数（メタタグの時は無し）
-        if (mora > 0) {
-            moraDecorations.push({
-                range: new vscode.Range(lineIndex, 0, lineIndex, 0),
-                renderOptions: {
-                    before: {
-                        contentText: mora.toString(),
-                        color: new vscode.ThemeColor('editorCodeLens.foreground'),
-                        fontWeight: 'normal'
+            // 2つ目: モーラ数（メタタグの時は無し）
+            if (mora > 0) {
+                moraDecorations.push({
+                    range: new vscode.Range(lineIndex, 0, lineIndex, 0),
+                    renderOptions: {
+                        before: {
+                            contentText: mora.toString(),
+                            color: new vscode.ThemeColor('editorCodeLens.foreground'),
+                            fontWeight: 'normal'
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
         // 3つ目: 母音（width設定、母音ごとに色分け）
-        const vowelText = mora > 0 && vowel ? ` ${vowel}` : '';
+        if (showVowel) {
+            const vowelText = mora > 0 && vowel ? ` ${vowel}` : '';
 
-        // 母音ごとの色設定
-        const vowelColors: { [key: string]: string } = {
-            'a': '#ff0000ff',  // 赤
-            'i': '#4fb0ffff',  // 青
-            'u': '#51cf66',  // 緑
-            'e': '#f5ff3bff',  // 黄
-            'o': '#fa71ffff',  // ピンク
-            'n': '#b9bdc1ff'   // グレー
-        };
-
-        const vowelColor = vowelColors[vowel] || new vscode.ThemeColor('editorCodeLens.foreground');
-
-        vowelDecorations.push({
-            range: new vscode.Range(lineIndex, 0, lineIndex, 0),
-            renderOptions: {
-                before: {
-                    contentText: vowelText,
-                    color: vowelColor,
-                    fontWeight: 'normal',
-                    width: '1em',
-                    margin: '0 0.5em 0 0.5em'
-                }
+            // 母音の色を決定
+            let vowelColor: string | vscode.ThemeColor;
+            if (colorizeVowel) {
+                // 母音ごとの色設定
+                const vowelColors: { [key: string]: string } = {
+                    'a': '#ff0000ff',  // 赤
+                    'i': '#4fb0ffff',  // 青
+                    'u': '#51cf66',  // 緑
+                    'e': '#f5ff3bff',  // 黄
+                    'o': '#fa71ffff',  // ピンク
+                    'n': '#b9bdc1ff'   // グレー
+                };
+                vowelColor = vowelColors[vowel] || new vscode.ThemeColor('editorCodeLens.foreground');
+            } else {
+                vowelColor = new vscode.ThemeColor('editorCodeLens.foreground');
             }
-        });
+
+            vowelDecorations.push({
+                range: new vscode.Range(lineIndex, 0, lineIndex, 0),
+                renderOptions: {
+                    before: {
+                        contentText: vowelText,
+                        color: vowelColor,
+                        fontWeight: 'normal',
+                        width: '1em',
+                        margin: '0 0.5em 0 0.5em'
+                    }
+                }
+            });
+        }
     }
 
     editor.setDecorations(paddingDecorationType, paddingDecorations);
@@ -386,6 +401,18 @@ export function activate(context: vscode.ExtensionContext) {
             const editor = vscode.window.activeTextEditor;
             if (editor && event.document === editor.document) {
                 updateMoraDecorations(editor);
+            }
+        })
+    );
+
+    // 設定が変更されたときにデコレーションを更新
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(event => {
+            if (event.affectsConfiguration('jlyrics')) {
+                const editor = vscode.window.activeTextEditor;
+                if (editor) {
+                    updateMoraDecorations(editor);
+                }
             }
         })
     );

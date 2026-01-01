@@ -41,7 +41,27 @@
         "scopeName": "source.jlyrics",
         "path": "./syntaxes/jlyrics.tmLanguage.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Japanese Lyrics Editor",
+      "properties": {
+        "jlyrics.showMoraCount": {
+          "type": "boolean",
+          "default": true,
+          "description": "モーラ数を行頭に表示する (Show mora count at the beginning of each line)"
+        },
+        "jlyrics.showVowel": {
+          "type": "boolean",
+          "default": true,
+          "description": "行末の母音を表示する (Show ending vowel of each line)"
+        },
+        "jlyrics.colorizeVowel": {
+          "type": "boolean",
+          "default": true,
+          "description": "母音を色分けして表示する (Colorize vowels by type)"
+        }
+      }
+    }
   },
   "repository": {
     "type": "git",
