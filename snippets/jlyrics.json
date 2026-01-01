@@ -33,5 +33,15 @@
     "prefix": "break",
     "body": "[Break]",
     "description": "Insert [Break] tag"
+  },
+  "Verse 2": {
+    "prefix": "verse2",
+    "body": "[Verse 2]",
+    "description": "Insert [Verse 2] tag"
+  },
+  "Instrumental": {
+    "prefix": "instrumental",
+    "body": "[Instrumental]",
+    "description": "Insert [Instrumental] tag"
   }
 }

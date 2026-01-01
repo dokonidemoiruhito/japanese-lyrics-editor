@@ -119,6 +119,77 @@ async function getEndVowel(text: string): Promise<string> {
     return vowelMap[lastChar] || '';
 }
 
+// DocumentSymbolProvider - アウトライン表示用
+class JLyricsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
+    provideDocumentSymbols(document: vscode.TextDocument): vscode.DocumentSymbol[] {
+        const symbols: vscode.DocumentSymbol[] = [];
+        const metaTagPattern = /^\s*\[(Intro|Verse(?:\s+\d+)?|Pre-Chorus|Chorus|Bridge|Outro|Break|Instrumental)\]\s*$/i;
+
+        for (let i = 0; i < document.lineCount; i++) {
+            const line = document.lineAt(i);
+            const match = line.text.match(metaTagPattern);
+
+            if (match) {
+                const tagName = match[1];
+                // 次のメタタグまでの範囲を取得
+                let endLine = i;
+                for (let j = i + 1; j < document.lineCount; j++) {
+                    if (document.lineAt(j).text.match(metaTagPattern)) {
+                        endLine = j - 1;
+                        break;
+                    }
+                    endLine = j;
+                }
+
+                const range = new vscode.Range(i, 0, endLine, document.lineAt(endLine).text.length);
+                const selectionRange = new vscode.Range(i, 0, i, line.text.length);
+
+                const symbol = new vscode.DocumentSymbol(
+                    `[${tagName}]`,
+                    '',
+                    vscode.SymbolKind.Array,
+                    range,
+                    selectionRange
+                );
+
+                symbols.push(symbol);
+            }
+        }
+
+        return symbols;
+    }
+}
+
+// FoldingRangeProvider - 折りたたみ機能用
+class JLyricsFoldingRangeProvider implements vscode.FoldingRangeProvider {
+    provideFoldingRanges(document: vscode.TextDocument): vscode.FoldingRange[] {
+        const foldingRanges: vscode.FoldingRange[] = [];
+        const metaTagPattern = /^\s*\[(Intro|Verse(?:\s+\d+)?|Pre-Chorus|Chorus|Bridge|Outro|Break|Instrumental)\]\s*$/i;
+
+        for (let i = 0; i < document.lineCount; i++) {
+            const line = document.lineAt(i);
+
+            if (line.text.match(metaTagPattern)) {
+                // 次のメタタグまでの範囲を取得
+                let endLine = i;
+                for (let j = i + 1; j < document.lineCount; j++) {
+                    if (document.lineAt(j).text.match(metaTagPattern)) {
+                        endLine = j - 1;
+                        break;
+                    }
+                    endLine = j;
+                }
+
+                if (endLine > i) {
+                    foldingRanges.push(new vscode.FoldingRange(i, endLine));
+                }
+            }
+        }
+
+        return foldingRanges;
+    }
+}
+
 // モーラ数を表示する関数
 async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
     if (!editor || editor.document.languageId !== 'jlyrics') {
@@ -226,11 +297,13 @@ export function activate(context: vscode.ExtensionContext) {
     const metaTags = [
         { label: '[Intro]', description: 'イントロ' },
         { label: '[Verse]', description: 'ヴァース' },
+        { label: '[Verse 2]', description: 'ヴァース2' },
         { label: '[Pre-Chorus]', description: 'プリコーラス' },
         { label: '[Chorus]', description: 'コーラス（サビ）' },
         { label: '[Bridge]', description: 'ブリッジ' },
         { label: '[Outro]', description: 'アウトロ' },
-        { label: '[Break]', description: 'ブレイク' }
+        { label: '[Break]', description: 'ブレイク' },
+        { label: '[Instrumental]', description: 'インストゥルメンタル' }
     ];
 
     const completionProvider = vscode.languages.registerCompletionItemProvider(
@@ -247,7 +320,8 @@ export function activate(context: vscode.ExtensionContext) {
                 return metaTags.map(tag => {
                     const item = new vscode.CompletionItem(tag.label, vscode.CompletionItemKind.Snippet);
                     item.detail = tag.description;
-                    item.insertText = tag.label.substring(1); // `[` は既に入力されているので除く
+                    // `[` と `]` の両方を除く（autoClosingPairsにより `]` も自動挿入されるため）
+                    item.insertText = tag.label.substring(1, tag.label.length - 1);
                     return item;
                 });
             }
@@ -256,6 +330,20 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(completionProvider);
+
+    // DocumentSymbolProvider を登録（アウトライン表示）
+    const documentSymbolProvider = vscode.languages.registerDocumentSymbolProvider(
+        'jlyrics',
+        new JLyricsDocumentSymbolProvider()
+    );
+    context.subscriptions.push(documentSymbolProvider);
+
+    // FoldingRangeProvider を登録（折りたたみ機能）
+    const foldingRangeProvider = vscode.languages.registerFoldingRangeProvider(
+        'jlyrics',
+        new JLyricsFoldingRangeProvider()
+    );
+    context.subscriptions.push(foldingRangeProvider);
 
     // Kuroshiroを初期化（バックグラウンドで）
     initKuroshiro().then(() => {

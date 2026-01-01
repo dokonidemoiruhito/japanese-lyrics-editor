@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Japanese Lyrics",
+  "scopeName": "source.jlyrics",
+  "patterns": [
+    {
+      "include": "#meta-tags"
+    },
+    {
+      "include": "#ruby-notation"
+    }
+  ],
+  "repository": {
+    "meta-tags": {
+      "patterns": [
+        {
+          "name": "constant.language.jlyrics",
+          "match": "\\[(?:Intro|Verse|Verse 2|Pre-Chorus|Chorus|Bridge|Outro|Break|Instrumental)\\]"
+        }
+      ]
+    },
+    "ruby-notation": {
+      "patterns": [
+        {
+          "name": "meta.ruby.jlyrics",
+          "match": "([一-龯々〆ヵヶ]+)(\\()([ぁ-んー]+)(\\))",
+          "captures": {
+            "2": {
+              "name": "punctuation.definition.parameters.begin.jlyrics"
+            },
+            "4": {
+              "name": "punctuation.definition.parameters.end.jlyrics"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
