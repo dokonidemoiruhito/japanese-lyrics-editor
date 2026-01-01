@@ -27,8 +27,8 @@ Suno AI, Udio, VOCALOID, UTAU 等の作詞作業に最適です。
 
 ## Usage (使い方)
 
-1. 拡張子が `.jlyric` のファイルを作成します
-（Create a file with **`.jlyric`** extension.）
+1. 拡張子が `.jlyrics` のファイルを作成します
+（Create a file with **`.jlyrics`** extension.）
 2. 歌詞を入力してください
 （Start writing Japanese lyrics.）
 3. 行頭にグレーの文字で、モーラ数と母音が表示されます
@@ -60,7 +60,7 @@ This software includes the following third-party libraries:
 * **kuroshiro** (MIT License)
 * **kuroshiro-analyzer-kuromoji** (MIT License)
 
-This extension is released under the [MIT License](https://www.google.com/search?q=LICENSE).
+This extension is released under the [MIT License](LICENSE).
 
 ---
 
