@@ -249,14 +249,27 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
             });
         }
 
-        // 3つ目: 母音（width設定）
+        // 3つ目: 母音（width設定、母音ごとに色分け）
         const vowelText = mora > 0 && vowel ? ` ${vowel}` : '';
+
+        // 母音ごとの色設定
+        const vowelColors: { [key: string]: string } = {
+            'a': '#ff0000ff',  // 赤
+            'i': '#4fb0ffff',  // 青
+            'u': '#51cf66',  // 緑
+            'e': '#f5ff3bff',  // 黄
+            'o': '#fa71ffff',  // ピンク
+            'n': '#b9bdc1ff'   // グレー
+        };
+
+        const vowelColor = vowelColors[vowel] || new vscode.ThemeColor('editorCodeLens.foreground');
+
         vowelDecorations.push({
             range: new vscode.Range(lineIndex, 0, lineIndex, 0),
             renderOptions: {
                 before: {
                     contentText: vowelText,
-                    color: new vscode.ThemeColor('editorCodeLens.foreground'),
+                    color: vowelColor,
                     fontWeight: 'normal',
                     width: '1em',
                     margin: '0 0.5em 0 0.5em'
