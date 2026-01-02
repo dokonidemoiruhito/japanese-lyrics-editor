@@ -2,16 +2,13 @@
   "name": "japanese-lyrics-editor",
   "displayName": "日本語作詞支援エディタ (J-Lyrics)",
   "description": "モーラ数（拍数）カウントと母音表示機能付きの作詞支援ツール。",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "local",
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
     "Other"
-  ],
-  "activationEvents": [
-    "onLanguage:jlyrics"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -54,11 +51,6 @@
           "type": "boolean",
           "default": true,
           "description": "行末の母音を表示する (Show ending vowel of each line)"
-        },
-        "jlyrics.colorizeVowel": {
-          "type": "boolean",
-          "default": true,
-          "description": "母音を色分けして表示する (Colorize vowels by type)"
         }
       }
     }

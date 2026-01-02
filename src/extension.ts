@@ -6,9 +6,10 @@ import KuromojiAnalyzer from 'kuroshiro-analyzer-kuromoji';
 
 let kuroshiroInstance: any = null;
 let kuroshiroReady = false;
+let kuroshiroInitializing = false; // 初期化中フラグ
 let paddingDecorationType: vscode.TextEditorDecorationType; // 透明な"0"
 let moraDecorationType: vscode.TextEditorDecorationType; // モーラ数
-let vowelDecorationType: vscode.TextEditorDecorationType; // 母音（width設定）
+let gutterVowelDecorationTypes: { [key: string]: vscode.TextEditorDecorationType } = {}; // ガター母音表示（母音ごと）
 
 // 母音マッピング
 const vowelMap: { [key: string]: string } = {
@@ -26,18 +27,57 @@ const vowelMap: { [key: string]: string } = {
     'ー': ''
 };
 
-// Kuroshiro初期化
+// 母音ごとの色設定
+const vowelColors: { [key: string]: string } = {
+    'a': '#ffcdd2ff',  // Red 100 (優しい赤)
+    'i': '#b3e5fcff',  // Light Blue 100 (空色)
+    'u': '#c8e6c9ff',  // Green 100 (若草色)
+    'e': '#f0f4c3ff',  // Lime 100 (ライムイエロー)
+    'o': '#e1bee7ff',  // Purple 100 (ラベンダー)
+    'n': '#cfd8dcff'   // Blue Grey 100 (シルバーグレー)
+};
+
+// SVG Data URIを生成
+function createVowelSvg(vowel: string): vscode.Uri {
+    const color = vowelColors[vowel] || '#808080';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+        <rect x="0" y="0" width="16" height="16" fill="${color}" />
+        <text x="8" y="13" text-anchor="middle" font-size="16" font-family="Consolas" fill="black">${vowel}</text>
+    </svg>`;
+    const encoded = Buffer.from(svg).toString('base64');
+    return vscode.Uri.parse(`data:image/svg+xml;base64,${encoded}`);
+}
+
+// Kuroshiro初期化（遅延初期化）
 async function initKuroshiro(): Promise<void> {
+    if (kuroshiroReady || kuroshiroInitializing) {
+        return; // 既に初期化済みまたは初期化中
+    }
+
+    kuroshiroInitializing = true;
+
     try {
         console.log('Initializing Kuroshiro...');
+        vscode.window.showInformationMessage('J-Lyrics: 漢字辞書を読み込んでいます...');
+
         kuroshiroInstance = new Kuroshiro();
         const analyzer = new KuromojiAnalyzer();
         await kuroshiroInstance.init(analyzer);
         kuroshiroReady = true;
+
         console.log('Kuroshiro initialized successfully');
+        vscode.window.showInformationMessage('J-Lyrics: 漢字辞書の読み込みが完了しました');
+
+        // 初期化完了後、アクティブなエディタを更新
+        if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.languageId === 'jlyrics') {
+            updateMoraDecorations(vscode.window.activeTextEditor);
+        }
     } catch (error) {
         console.error('Kuroshiro initialization failed:', error);
         kuroshiroReady = false;
+        vscode.window.showErrorMessage('J-Lyrics: 漢字辞書の読み込みに失敗しました');
+    } finally {
+        kuroshiroInitializing = false;
     }
 }
 
@@ -202,7 +242,14 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
         return;
     }
 
-    // Kuroshiroが初期化されていない場合は待つ
+    // Kuroshiroが初期化されていない場合は初期化を開始
+    if (!kuroshiroReady && !kuroshiroInitializing) {
+        console.log('Starting Kuroshiro initialization on first jlyrics file open');
+        initKuroshiro(); // 非同期で初期化開始
+        return; // 初期化完了後に再度呼ばれる
+    }
+
+    // 初期化中または未完了の場合はスキップ
     if (!kuroshiroReady) {
         console.log('Kuroshiro not ready yet, skipping mora update');
         return;
@@ -212,11 +259,12 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
     const config = vscode.workspace.getConfiguration('jlyrics');
     const showMoraCount = config.get<boolean>('showMoraCount', true);
     const showVowel = config.get<boolean>('showVowel', true);
-    const colorizeVowel = config.get<boolean>('colorizeVowel', true);
 
     const paddingDecorations: vscode.DecorationOptions[] = [];
     const moraDecorations: vscode.DecorationOptions[] = [];
-    const vowelDecorations: vscode.DecorationOptions[] = [];
+    const gutterVowelDecorations: { [key: string]: vscode.DecorationOptions[] } = {
+        'a': [], 'i': [], 'u': [], 'e': [], 'o': [], 'n': []
+    };
     const document = editor.document;
 
     for (let lineIndex = 0; lineIndex < document.lineCount; lineIndex++) {
@@ -260,6 +308,13 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
             } catch (error) {
                 // 変換エラーは無視
             }
+        }
+
+        // ガターに母音を表示
+        if (showVowel && mora > 0 && vowel && gutterVowelDecorations[vowel]) {
+            gutterVowelDecorations[vowel].push({
+                range: new vscode.Range(lineIndex, 0, lineIndex, 0)
+            });
         }
 
         // 1つ目: 透明な"0"（一桁なら1個、二桁なら無し、メタタグなら2個）
@@ -312,49 +367,17 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
             }
         }
 
-        // 3つ目: 母音（width設定、母音ごとに色分け）
-        if (showVowel) {
-            const vowelText = mora > 0 && vowel ? ` ${vowel}` : '';
+    }
 
-            // 母音の色を決定
-            let vowelColor: string | vscode.ThemeColor;
-            if (colorizeVowel) {
-                // 母音ごとの色設定
-                const vowelColors: { [key: string]: string } = {
-                    'a': '#ff0000ff',  // 赤
-                    'i': '#4fb0ffff',  // 青
-                    'u': '#51cf66',  // 緑
-                    'e': '#f5ff3bff',  // 黄
-                    'o': '#fa71ffff',  // ピンク
-                    'n': '#b9bdc1ff'   // グレー
-                };
-                vowelColor = vowelColors[vowel] || new vscode.ThemeColor('editorCodeLens.foreground');
-            } else {
-                vowelColor = new vscode.ThemeColor('editorCodeLens.foreground');
-            }
-
-            // iは幅が小さいので左マージンを追加し、その分widthを減らしてバランスを取る
-            const vowelMargin = vowel === 'i' ? '0 0 0 0.15em' : '0 0 0 0';
-            const vowelWidth = vowel === 'i' ? '0.85em' : '1em';
-
-            vowelDecorations.push({
-                range: new vscode.Range(lineIndex, 0, lineIndex, 0),
-                renderOptions: {
-                    before: {
-                        contentText: vowelText,
-                        color: vowelColor,
-                        fontWeight: 'normal',
-                        width: vowelWidth,
-                        margin: vowelMargin
-                    }
-                }
-            });
+    // ガター母音デコレーションを母音ごとに適用
+    for (const vowel of ['a', 'i', 'u', 'e', 'o', 'n']) {
+        if (gutterVowelDecorationTypes[vowel]) {
+            editor.setDecorations(gutterVowelDecorationTypes[vowel], gutterVowelDecorations[vowel]);
         }
     }
 
     editor.setDecorations(paddingDecorationType, paddingDecorations);
     editor.setDecorations(moraDecorationType, moraDecorations);
-    editor.setDecorations(vowelDecorationType, vowelDecorations);
 }
 
 // 拡張機能のアクティベーション
@@ -374,11 +397,12 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    vowelDecorationType = vscode.window.createTextEditorDecorationType({
-        before: {
-            color: new vscode.ThemeColor('editorCodeLens.foreground'),
-        }
-    });
+    // 母音ごとのガターアイコンデコレーションタイプを作成
+    for (const vowel of ['a', 'i', 'u', 'e', 'o', 'n']) {
+        gutterVowelDecorationTypes[vowel] = vscode.window.createTextEditorDecorationType({
+            gutterIconPath: createVowelSvg(vowel)
+        });
+    }
 
     // Completion Provider を登録
     const metaTags = [
@@ -432,18 +456,11 @@ export function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(foldingRangeProvider);
 
-    // Kuroshiroを初期化（バックグラウンドで）
-    initKuroshiro().then(() => {
-        vscode.window.showInformationMessage('japanese-lyrics-editor: Kuroshiro initialized');
-
-        // アクティブなエディタを更新
-        if (vscode.window.activeTextEditor) {
-            updateMoraDecorations(vscode.window.activeTextEditor);
-        }
-    }).catch(error => {
-        vscode.window.showErrorMessage('japanese-lyrics-editor: Failed to initialize Kuroshiro');
-        console.error(error);
-    });
+    // 遅延初期化：Kuroshiroは最初の.jlyricsファイルを開いたときに初期化される
+    // 起動時に既にjlyricsファイルが開いている場合は即座に処理
+    if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.languageId === 'jlyrics') {
+        updateMoraDecorations(vscode.window.activeTextEditor);
+    }
 
     // エディタが変更されたときにモーラ数を更新
     context.subscriptions.push(
@@ -485,7 +502,9 @@ export function deactivate() {
     if (moraDecorationType) {
         moraDecorationType.dispose();
     }
-    if (vowelDecorationType) {
-        vowelDecorationType.dispose();
+    for (const vowel in gutterVowelDecorationTypes) {
+        if (gutterVowelDecorationTypes[vowel]) {
+            gutterVowelDecorationTypes[vowel].dispose();
+        }
     }
 }
