@@ -250,7 +250,19 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
                         before: {
                             contentText: mora.toString(),
                             color: new vscode.ThemeColor('editorCodeLens.foreground'),
-                            fontWeight: 'normal'
+                            fontWeight: 'normal',
+                            margin: '0 0.5em 0 0'
+                        }
+                    }
+                });
+            } else {
+                // モーラ数が0のときは空白を入れて位置を調整
+                moraDecorations.push({
+                    range: new vscode.Range(lineIndex, 0, lineIndex, 0),
+                    renderOptions: {
+                        before: {
+                            contentText: '',
+                            margin: '0 0.5em 0 0'
                         }
                     }
                 });
@@ -278,6 +290,10 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
                 vowelColor = new vscode.ThemeColor('editorCodeLens.foreground');
             }
 
+            // iは幅が小さいので左マージンを追加し、その分widthを減らしてバランスを取る
+            const vowelMargin = vowel === 'i' ? '0 0 0 0.15em' : '0 0 0 0';
+            const vowelWidth = vowel === 'i' ? '0.85em' : '1em';
+
             vowelDecorations.push({
                 range: new vscode.Range(lineIndex, 0, lineIndex, 0),
                 renderOptions: {
@@ -285,8 +301,8 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
                         contentText: vowelText,
                         color: vowelColor,
                         fontWeight: 'normal',
-                        width: '1em',
-                        margin: '0 0.5em 0 0.5em'
+                        width: vowelWidth,
+                        margin: vowelMargin
                     }
                 }
             });
