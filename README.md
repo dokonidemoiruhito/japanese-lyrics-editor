@@ -38,6 +38,11 @@ Suno AI等の作詞作業に便利かもしれません。
   * `[` を入力すると、メタタグの候補が表示されます。
   * `intro`, `verse`, `chorus` などのプレフィックスでも挿入できます。
 
+* **Hover Details (ホバー詳細表示)**
+  * モーラ数表示部分にマウスをホバーすると、詳細情報が表示されます。
+  * モーラ分解（例: `が / っ / こ / う`）を確認できます。
+  * 変換前/変換後のテキストやルビ記法の解釈も表示されます。
+
 ## Usage (使い方)
 
 1. 拡張子が `.jlyrics` のファイルを作成します
@@ -46,6 +51,8 @@ Suno AI等の作詞作業に便利かもしれません。
 （Start writing Japanese lyrics.）
 3. 行頭にグレーの文字で、モーラ数と母音が表示されます
 （Mora counts and vowels will appear at the beginning of each line as decorations.）
+4. モーラ数にマウスをホバーすると、詳細な分解情報が表示されます
+（Hover over the mora count to see detailed breakdown information.）
 
 > **Tip:** If the counts do not appear, verify that the language mode is set to "Japanese Lyrics" (bottom right of the window).
 

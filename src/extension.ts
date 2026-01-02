@@ -41,9 +41,9 @@ async function initKuroshiro(): Promise<void> {
     }
 }
 
-// モーラ数カウント関数
-async function countMora(text: string): Promise<number> {
-    if (!text || text.trim() === '') return 0;
+// モーラを分解して配列で返す関数
+async function decomposeMora(text: string): Promise<string[]> {
+    if (!text || text.trim() === '') return [];
 
     // タグを除外
     text = text.replace(/\[.*?\]/g, '');
@@ -60,7 +60,7 @@ async function countMora(text: string): Promise<number> {
         }
     }
 
-    let count = 0;
+    const moraList: string[] = [];
     const smallKana = ['ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'ゃ', 'ゅ', 'ょ', 'ゎ',
                       'ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ャ', 'ュ', 'ョ', 'ヮ'];
 
@@ -73,16 +73,22 @@ async function countMora(text: string): Promise<number> {
                           (char >= 'ー' && char <= 'ー');
 
         if (isJapanese) {
-            // 小書き文字（拗音）は前の文字と合わせて1モーラ
-            if (smallKana.includes(char) && i > 0) {
-                // カウントしない（前の文字と合わせて1モーラ）
+            // 小書き文字（拗音）は前の文字と結合
+            if (smallKana.includes(char) && moraList.length > 0) {
+                moraList[moraList.length - 1] += char;
             } else {
-                count++;
+                moraList.push(char);
             }
         }
     }
 
-    return count;
+    return moraList;
+}
+
+// モーラ数カウント関数
+async function countMora(text: string): Promise<number> {
+    const moraList = await decomposeMora(text);
+    return moraList.length;
 }
 
 // 行末の母音を取得
@@ -219,6 +225,42 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
 
         const mora = await countMora(text);
         const vowel = await getEndVowel(text);
+        const moraList = await decomposeMora(text);
+
+        // ホバーメッセージを作成
+        const hoverMessage = new vscode.MarkdownString();
+        hoverMessage.appendMarkdown(`**モーラ数**: ${mora}`);
+        if (vowel) {
+            hoverMessage.appendMarkdown(` | **母音**: ${vowel}`);
+        }
+        hoverMessage.appendMarkdown(`  \n`);
+
+        if (moraList.length > 0) {
+            hoverMessage.appendMarkdown(`**分解**: \`${moraList.join(' / ')}\`  \n`);
+        }
+
+        hoverMessage.appendMarkdown(`\n---\n`);
+        hoverMessage.appendMarkdown(`**変換前**: \`${text}\`  \n`);
+
+        // Sunoのルビ記法を処理前に保存
+        const rubyMatches = [...text.matchAll(/([一-龯々〆ヵヶ]+)\(([ぁ-んー]+)\)/g)];
+        if (rubyMatches.length > 0) {
+            const rubyInfo = rubyMatches.map(m => `${m[1]}→${m[2]}`).join(', ');
+            hoverMessage.appendMarkdown(`**ルビ**: ${rubyInfo}  \n`);
+        }
+
+        // 変換後のテキストを取得
+        let convertedText = text.replace(/\[.*?\]/g, '').replace(/([一-龯々〆ヵヶ]+)\(([ぁ-んー]+)\)/g, '$2');
+        if (kuroshiroReady && kuroshiroInstance && moraList.length > 0) {
+            try {
+                const tempConverted = await kuroshiroInstance.convert(convertedText, { to: 'hiragana', mode: 'normal' });
+                if (tempConverted !== convertedText) {
+                    hoverMessage.appendMarkdown(`**変換後**: \`${tempConverted}\`  \n`);
+                }
+            } catch (error) {
+                // 変換エラーは無視
+            }
+        }
 
         // 1つ目: 透明な"0"（一桁なら1個、二桁なら無し、メタタグなら2個）
         if (showMoraCount) {
@@ -246,6 +288,7 @@ async function updateMoraDecorations(editor: vscode.TextEditor): Promise<void> {
             if (mora > 0) {
                 moraDecorations.push({
                     range: new vscode.Range(lineIndex, 0, lineIndex, 0),
+                    hoverMessage: hoverMessage,
                     renderOptions: {
                         before: {
                             contentText: mora.toString(),
