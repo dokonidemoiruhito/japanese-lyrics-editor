@@ -33,7 +33,7 @@ Suno AI等の作詞作業に便利かもしれません。
 
 ## 表示例 (Example)
 
-![表示例](https://raw.githubusercontent.com/dokonidemoiruhito/japanese-lyrics-editor/main/suno-vscode-extension/images/screenshot.png)
+![表示例](https://raw.githubusercontent.com/dokonidemoiruhito/japanese-lyrics-editor/master/images/screenshot.png)
 
 
 ## 導入手順 (Installation)
