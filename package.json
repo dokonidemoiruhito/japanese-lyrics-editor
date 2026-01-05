@@ -2,7 +2,7 @@
   "name": "japanese-lyrics-editor",
   "displayName": "日本語作詞支援エディタ (J-Lyrics)",
   "description": "モーラ数（拍数）カウントと母音表示機能付きの作詞支援ツール。",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "publisher": "local",
   "engines": {
     "vscode": "^1.80.0"
