@@ -51,6 +51,18 @@
           "type": "boolean",
           "default": true,
           "description": "行末の母音を表示する (Show ending vowel of each line)"
+        },
+        "jlyrics.vowelDisplayStyle": {
+          "type": "string",
+          "default": "katakana",
+          "enum": ["romaji", "romaji-upper", "hiragana", "katakana"],
+          "enumDescriptions": [
+            "ローマ字（小文字） (ａ, ｉ, ｕ, ｅ, ｏ, ｎ)",
+            "ローマ字（大文字） (Ａ, Ｉ, Ｕ, Ｅ, Ｏ, Ｎ)",
+            "ひらがな (あ, い, う, え, お, ん)",
+            "カタカナ (ア, イ, ウ, エ, オ, ン)"
+          ],
+          "description": "母音の表示スタイル (Vowel display style)"
         }
       }
     }

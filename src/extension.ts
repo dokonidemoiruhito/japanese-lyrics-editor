@@ -37,12 +37,30 @@ const vowelColors: { [key: string]: string } = {
     'n': '#cfd8dcff'   // Blue Grey 100 (シルバーグレー)
 };
 
+// 母音の表示マッピング（スタイル別）
+const vowelDisplayMaps: { [style: string]: { [key: string]: string } } = {
+    'romaji': {
+        'a': 'ａ', 'i': 'ｉ', 'u': 'ｕ', 'e': 'ｅ', 'o': 'ｏ', 'n': 'ｎ'
+    },
+    'romaji-upper': {
+        'a': 'Ａ', 'i': 'Ｉ', 'u': 'Ｕ', 'e': 'Ｅ', 'o': 'Ｏ', 'n': 'Ｎ'
+    },
+    'hiragana': {
+        'a': 'あ', 'i': 'い', 'u': 'う', 'e': 'え', 'o': 'お', 'n': 'ん'
+    },
+    'katakana': {
+        'a': 'ア', 'i': 'イ', 'u': 'ウ', 'e': 'エ', 'o': 'オ', 'n': 'ン'
+    }
+};
+
 // SVG Data URIを生成
-function createVowelSvg(vowel: string): vscode.Uri {
+function createVowelSvg(vowel: string, displayStyle: string = 'katakana'): vscode.Uri {
     const color = vowelColors[vowel] || '#808080';
+    const displayMap = vowelDisplayMaps[displayStyle] || vowelDisplayMaps['katakana'];
+    const displayText = displayMap[vowel] || vowel;
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
         <rect x="0" y="0" width="16" height="16" fill="${color}" />
-        <text x="8" y="13" text-anchor="middle" font-size="16" font-family="Consolas" fill="black">${vowel}</text>
+        <text x="8" y="13" text-anchor="middle" font-size="14" font-family="Consolas" fill="black">${displayText}</text>
     </svg>`;
     const encoded = Buffer.from(svg).toString('base64');
     return vscode.Uri.parse(`data:image/svg+xml;base64,${encoded}`);
@@ -397,10 +415,12 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // 母音ごとのガターアイコンデコレーションタイプを作成
+    // 母音ごとのガターアイコンデコレーションタイプを作成（初期設定を読み込み）
+    const config = vscode.workspace.getConfiguration('jlyrics');
+    const vowelDisplayStyle = config.get<string>('vowelDisplayStyle', 'katakana');
     for (const vowel of ['a', 'i', 'u', 'e', 'o', 'n']) {
         gutterVowelDecorationTypes[vowel] = vscode.window.createTextEditorDecorationType({
-            gutterIconPath: createVowelSvg(vowel)
+            gutterIconPath: createVowelSvg(vowel, vowelDisplayStyle)
         });
     }
 
@@ -485,9 +505,30 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(event => {
             if (event.affectsConfiguration('jlyrics')) {
-                const editor = vscode.window.activeTextEditor;
-                if (editor) {
-                    updateMoraDecorations(editor);
+                // 母音表示スタイルが変更された場合、デコレーションタイプを再生成
+                if (event.affectsConfiguration('jlyrics.vowelDisplayStyle')) {
+                    // 既存のデコレーションタイプを破棄
+                    for (const vowel in gutterVowelDecorationTypes) {
+                        if (gutterVowelDecorationTypes[vowel]) {
+                            gutterVowelDecorationTypes[vowel].dispose();
+                        }
+                    }
+
+                    // 新しい設定で再生成
+                    const config = vscode.workspace.getConfiguration('jlyrics');
+                    const vowelDisplayStyle = config.get<string>('vowelDisplayStyle', 'katakana');
+                    for (const vowel of ['a', 'i', 'u', 'e', 'o', 'n']) {
+                        gutterVowelDecorationTypes[vowel] = vscode.window.createTextEditorDecorationType({
+                            gutterIconPath: createVowelSvg(vowel, vowelDisplayStyle)
+                        });
+                    }
+                }
+
+                // 表示中のすべてのjlyricsエディタを更新
+                for (const editor of vscode.window.visibleTextEditors) {
+                    if (editor.document.languageId === 'jlyrics') {
+                        updateMoraDecorations(editor);
+                    }
                 }
             }
         })
